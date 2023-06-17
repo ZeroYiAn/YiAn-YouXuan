@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper SYSTEM "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zero.yianyx.activity.mapper.ActivityInfoMapper">
+
+    <resultMap id="ActivityRuleMap" type="com.zero.yianyx.model.activity.ActivityRule" autoMapping="true"></resultMap>
+    <resultMap id="ActivitySkuMap" type="com.zero.yianyx.model.activity.ActivitySku" autoMapping="true"></resultMap>
+
+    <select id="selectExistSkuIdList" resultType="Long">
+        select
+        sku.sku_id
+        from activity_info info
+        inner join activity_sku sku on sku.activity_id = info.id
+        <where>
+            <if test="skuIdList != null">
+                and sku.is_deleted =0
+                and sku.sku_id in
+                <foreach collection="skuIdList" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            and now() between info.start_time and info.end_time
+        </where>
+    </select>
+
+    <select id="selectActivityRuleList" resultMap="ActivityRuleMap">
+        select
+            info.activity_type as activityType,
+            rule.id,rule.activity_id,rule.condition_amount,rule.condition_num,rule.benefit_amount,rule.benefit_discount
+        from activity_info info
+                 inner join activity_sku sku on sku.activity_id = info.id
+                 inner join activity_rule rule on rule.activity_id = info.id
+        where
+            sku.sku_id = #{skuId}
+          and now() between info.start_time and info.end_time
+        and rule.is_deleted = 0
+        group by rule.id
+        order by rule.condition_amount desc,rule.condition_num desc
+    </select>
+
+
+<!--    <select id="selectCartActivityList" resultMap="ActivitySkuMap">-->
+<!--        select-->
+<!--        info.id as activityId,-->
+<!--        sku.sku_id as skuId-->
+<!--        from activity_info info-->
+<!--        inner join activity_sku sku on info.id = sku.activity_id-->
+<!--        <where>-->
+<!--            and sku.is_deleted =0-->
+<!--            and sku.sku_id in-->
+<!--            <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+
+<!--            and now() between info.start_time and info.end_time-->
+<!--        </where>-->
+<!--    </select>-->
+
+    <select id="selectCartActivityList" resultMap="ActivitySkuMap">
+        select
+        info.id as activityId,
+        sku.sku_id as skuId
+        from activity_info info
+        inner join activity_sku sku on info.id = sku.activity_id
+        <where>
+            <if test="skuIdList != null">
+                 and sku.is_deleted =0
+                 and sku.sku_id in
+                 <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                     #{item}
+                 </foreach>
+            </if>
+            and now() between info.start_time and info.end_time
+        </where>
+    </select>
+
+
+
+</mapper>

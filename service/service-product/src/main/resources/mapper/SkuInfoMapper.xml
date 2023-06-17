@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper SYSTEM "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zero.yianyx.product.mapper.SkuInfoMapper">
+    <resultMap id="skuInfoMap" type="com.zero.yianyx.model.product.SkuInfo" autoMapping="true">
+    </resultMap>
+
+    <!-- 用于select查询公用抽取的列 -->
+    <sql id="columns">
+        id,category_id,sku_type,sku_name,img_url,per_limit,publish_status,check_status,is_new_person,sort,sku_code,price,market_price,stock,lock_stock,low_stock,sale,ware_id,create_time,update_time,is_deleted
+    </sql>
+
+<!-- stock - lock_stock > #{skuNum} 库存量减去 锁定库存 大于 要购买的数量  for update可以对查到的行进行加锁 -->
+    <select id="checkStock" resultMap="skuInfoMap">
+        select <include refid="columns" />
+        from sku_info
+        where is_deleted=0 and id = #{skuId} and stock - lock_stock > #{skuNum} for update
+    </select>
+
+<!-- 锁定库存，实质上是更新操作，即更新字段 lock_stock 的值  -->
+    <update id="lockStock">
+        update sku_info set lock_stock = lock_stock + #{skuNum} where is_deleted=0 and id = #{skuId}
+    </update>
+
+<!--  解锁库存， 实质上是更新操作，即更新字段 lock_stock 的值 -->
+    <update id="unlockStock">
+        update sku_info set lock_stock = lock_stock - #{skuNum} where is_deleted=0 and id = #{skuId}
+    </update>
+
+
+    <update id="minusStock">
+        update sku_info set stock = stock - #{skuNum}, lock_stock = lock_stock - #{skuNum}, sales = sales + #{skuNum} where id = #{skuId} and is_deleted =0
+    </update>
+
+</mapper>
